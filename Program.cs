@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using MathNet.Numerics.LinearAlgebra;
 using Newtow.Equations;
 using Newton.Utils;
@@ -45,7 +46,7 @@ namespace Newton
       this.Status = CompletedStatus.NotStarted;
     }
 
-    public Vector<double> SolveEquationSystem(Vector<double> values, int maxIteration = 100)
+    public virtual Vector<double> SolveEquationSystem(Vector<double> values, int maxIteration = 100)
     {
       this.SetInitialStatus(values);
 
@@ -137,6 +138,52 @@ namespace Newton
     }
   }
 
+  class MultiThreadSimpleIterationMethod : SimpleIterationMethod
+  {
+    private int _maxDegreeOfParallel { get; set; }
+
+    public MultiThreadSimpleIterationMethod([NotNull] EquivalentEquationSystem system, double errorRate = .00001f) : base(system, errorRate)
+    {
+      this._maxDegreeOfParallel = 2;
+    }
+
+    public override Vector<double> SolveEquationSystem(Vector<double> values, int maxIteration = 100)
+    {
+      this._maxDegreeOfParallel = 2;
+      return base.SolveEquationSystem(values, maxIteration);
+    }
+
+    public Vector<double> SolveEquationSystem(Vector<double> values, int maxIteration = 100, int maxDegreeOfParallel = 2)
+    {
+      this._maxDegreeOfParallel = maxDegreeOfParallel;
+      return base.SolveEquationSystem(values, maxIteration);
+    }
+
+    protected override bool ComputeIteration(int iteration)
+    {
+      if (this.Solution == null)
+      {
+        throw new NullReferenceException("Solution cannot contains null");
+      }
+
+      var newSolution = this._equationSystem.Equations
+        .AsParallel()
+        .AsOrdered()
+        .WithDegreeOfParallelism(this._maxDegreeOfParallel)
+        .Select((eq) => eq(this.Solution))
+        .ToArray();
+
+      var newNormaValue = newSolution.GetNorma();
+      var isCompleted = Math.Abs(newNormaValue - this._currentNorma!.Value) < this._errorRate;
+
+      this.Solution = Vector<double>.Build.DenseOfArray(newSolution);
+      this.Iteration = iteration;
+      this._currentNorma = newNormaValue;
+
+      return isCompleted;
+    }
+  }
+
   class Programm
   {
     /*
@@ -158,10 +205,22 @@ namespace Newton
 
       var equationSystem = new EquivalentEquationSystem(number);
       var simpleIteartionMethod = new SimpleIterationMethod(equationSystem);
+      var parallelSimpleIterationMethod = new MultiThreadSimpleIterationMethod(equationSystem);
 
       try
       {
         var result = simpleIteartionMethod.SolveEquationSystem(testValues);
+        DisplayUtils.DisplayResults(result);
+      }
+      catch (Exception exc)
+      {
+        simpleIteartionMethod.DisplayResults();
+        DisplayUtils.DisplayException(exc);
+      }
+
+      try
+      {
+        var result = parallelSimpleIterationMethod.SolveEquationSystem(testValues);
         DisplayUtils.DisplayResults(result);
       }
       catch (Exception exc)
