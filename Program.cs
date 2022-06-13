@@ -18,7 +18,6 @@ namespace Newton
 			  единственное, надо привести исходное выражение (систему) к эквивалентному виду
 			- заюзать BenchmarkDotNet
 		*/
-
 		public static void Main(string[] args)
 		{
 			var number = 2;
