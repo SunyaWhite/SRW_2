@@ -1,4 +1,4 @@
-﻿namespace Newton.utils
+﻿namespace Newton.Utils
 {
 	public static class ListExtension
 	{

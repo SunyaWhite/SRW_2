@@ -1,6 +1,3 @@
-using MathNet.Numerics.LinearAlgebra;
-using Newton.Equations;
-
 namespace Newtow.Equations
 {
 
@@ -31,16 +28,6 @@ namespace Newtow.Equations
 		protected virtual Func<IList<double>, double> CreateEquation(int index)
 		{
 			return (IList<double> values) => ((3 + (2 * values[index])) * values[index]) - values[index - 1] - (2 * values[index + 1]) - 2;
-		}
-
-		public Vector<double> Compute(IList<double> values)
-		{
-			if (this._size != values.Count)
-			{
-				throw new EquationSystemException("Invalid size of argument array provided");
-			}
-
-			return Vector<double>.Build.DenseOfArray(this.Equations.Select((eq) => eq(values)).ToArray());
 		}
 	}
 }

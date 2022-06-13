@@ -1,22 +1,29 @@
-using MathNet.Numerics.LinearAlgebra;
+﻿using MathNet.Numerics.LinearAlgebra;
 using Newton.Utils;
 using Newtow.Equations;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Newton.NumericMethods.SimpleIteration
+namespace Newton.NumericMethods.NewtonMethod
 {
-
-	public class SimpleIterationMethod
+	// TODO провести рефакториг с выделением отдельной иерархии классов (выделить отдельный родительский класс)
+	// возможжно нажжо перераспределить обяханности между классами EquationSystem и ...Method
+	public class ModifiedNewtonMethod
 	{
-		protected readonly EquivalentEquationSystem _equationSystem;
+		protected readonly EquationSystem _equationSystem;
 		protected readonly double _errorRate;
 		protected double? _currentNorma { get; set; }
+		// TODO найти нормальное имя для свойства
+		/// <summary>
+		/// Матрица арифметических дополнений для матрицы Якоби
+		/// </summary>
+		protected Matrix<double>? _jacobian { get; set; }
+		protected double? _jacobianDeterminat { get; set; }
 		public Vector<double>? Solution { get; protected set; }
 		public string? Error { get; protected set; }
 		public CompletedStatus Status { get; protected set; }
 		public int Iteration { get; protected set; }
 
-		public SimpleIterationMethod([NotNull] EquivalentEquationSystem system, double errorRate = .00001f)
+		public ModifiedNewtonMethod([NotNull] EquationSystem system, double errorRate = .00001f)
 		{
 			this._equationSystem = system;
 			this._errorRate = errorRate;
@@ -54,12 +61,18 @@ namespace Newton.NumericMethods.SimpleIteration
 			return this.Solution!;
 		}
 
+		protected virtual void ComputeJacobian(Vector<double> values)
+		{
+			throw new NotImplementedException("");
+		}
+
 		protected virtual void SetInitialStatus(Vector<double> values)
 		{
 			this.Solution = values;
 			this._currentNorma = this.Solution.GetNorma();
 			this.Status = CompletedStatus.InProcess;
 			this.Error = null;
+			ComputeJacobian(this.Solution);
 		}
 
 		protected virtual void CompleteAsSuccess()
@@ -81,15 +94,12 @@ namespace Newton.NumericMethods.SimpleIteration
 				throw new NullReferenceException("Solution cannot contains null");
 			}
 
-			var newSolution = this._equationSystem.Compute(this.Solution);
-			var newNormaValue = newSolution.GetNorma();
-			var isCompleted = Math.Abs(newNormaValue - this._currentNorma!.Value) < this._errorRate;
+			if (this._jacobian is null || !this._jacobianDeterminat.HasValue)
+			{
+				throw new NullReferenceException("Jacobian matrix can't be null.");
+			}
 
-			this.Solution = newSolution;
-			this._currentNorma = newNormaValue;
-			this.Iteration = iteration;
-
-			return isCompleted;
+			throw new NotImplementedException();
 		}
 
 		public void DisplayResults()

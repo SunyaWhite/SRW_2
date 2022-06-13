@@ -1,3 +1,6 @@
+using MathNet.Numerics.LinearAlgebra;
+using Newton.Equations;
+
 namespace Newtow.Equations
 {
 	/*
@@ -32,6 +35,33 @@ namespace Newtow.Equations
 		protected override Func<IList<double>, double> CreateEquation(int index)
 		{
 			return (IList<double> values) => ((2 * values[index] * values[index]) - values[index - 1] - (2 * values[index + 1]) - 2) / -3;
+		}
+
+		public Vector<double> Compute(IList<double> values)
+		{
+			if (this._size != values.Count)
+			{
+				throw new EquationSystemException("Invalid size of argument array provided");
+			}
+
+			return Vector<double>.Build.DenseOfArray(this.Equations.Select((eq) => eq(values)).ToArray());
+		}
+
+		public Vector<double> ComputeParallel(IList<double> values, int degreeOfParallelism)
+		{
+			if (this._size != values.Count)
+			{
+				throw new EquationSystemException("Invalid size of argument array provided");
+			}
+
+			var newSolution = this.Equations
+			  .AsParallel()
+			  .AsOrdered()
+			  .WithDegreeOfParallelism(degreeOfParallelism)
+			  .Select((eq) => eq(values))
+			  .ToArray();
+
+			return Vector<double>.Build.DenseOfArray(newSolution);
 		}
 	}
 

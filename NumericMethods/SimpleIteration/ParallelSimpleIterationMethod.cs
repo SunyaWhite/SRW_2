@@ -1,5 +1,5 @@
 ﻿using MathNet.Numerics.LinearAlgebra;
-using Newton.utils;
+using Newton.Utils;
 using Newtow.Equations;
 using System.Diagnostics.CodeAnalysis;
 
@@ -14,18 +14,19 @@ namespace Newton.NumericMethods.SimpleIteration
 			this._maxDegreeOfParallel = 2;
 		}
 
-		public override Vector<double> SolveEquationSystem(Vector<double> values, int maxIteration = 100)
+		public override Vector<double> SolveEquationSystem(Vector<double> values, int maxIteration = 100, bool verbose = false)
 		{
 			this._maxDegreeOfParallel = 2;
-			return base.SolveEquationSystem(values, maxIteration);
+			return base.SolveEquationSystem(values, maxIteration, verbose);
 		}
 
-		public Vector<double> SolveEquationSystem(Vector<double> values, int maxIteration = 100, int maxDegreeOfParallel = 2)
+		public Vector<double> SolveEquationSystem(Vector<double> values, int maxIteration = 100, int maxDegreeOfParallel = 2, bool verbose = false)
 		{
 			this._maxDegreeOfParallel = maxDegreeOfParallel;
-			return base.SolveEquationSystem(values, maxIteration);
+			return base.SolveEquationSystem(values, maxIteration, verbose);
 		}
 
+		// TODO рефакторинг метода
 		protected override bool ComputeIteration(int iteration)
 		{
 			if (this.Solution == null)
@@ -33,19 +34,13 @@ namespace Newton.NumericMethods.SimpleIteration
 				throw new NullReferenceException("Solution cannot contains null");
 			}
 
-			var newSolution = this._equationSystem.Equations
-			  .AsParallel()
-			  .AsOrdered()
-			  .WithDegreeOfParallelism(this._maxDegreeOfParallel)
-			  .Select((eq) => eq(this.Solution))
-			  .ToArray();
-
+			var newSolution = this._equationSystem.ComputeParallel(this.Solution, this._maxDegreeOfParallel);
 			var newNormaValue = newSolution.GetNorma();
 			var isCompleted = Math.Abs(newNormaValue - this._currentNorma!.Value) < this._errorRate;
 
-			this.Solution = Vector<double>.Build.DenseOfArray(newSolution);
-			this.Iteration = iteration;
+			this.Solution = newSolution;
 			this._currentNorma = newNormaValue;
+			this.Iteration = iteration;
 
 			return isCompleted;
 		}
