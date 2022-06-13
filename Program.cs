@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using MathNet.Numerics.LinearAlgebra;
 using Newtow.Equations;
+using Newton.Utils;
 
 namespace Newton
 {
@@ -150,27 +151,10 @@ namespace Newton
         - заюзать BenchmarkDotNet
     */
 
-    public static void DisplayResults(IList<double> values)
-    {
-      foreach (var value in values)
-      {
-        Console.Write($"{value} ");
-      }
-
-      Console.WriteLine("\n_________________________\n");
-    }
-
-    public static void DisplayException(Exception exc)
-    {
-      Console.WriteLine("Completed with an error");
-      Console.WriteLine(exc.Message);
-      Console.WriteLine("\n_________________________\n");
-    }
-
     public static void Main(string[] args)
     {
-      var number = 10;
-      var testValues = Vector<double>.Build.Dense(number, 0);
+      var number = 2;
+      var testValues = Vector<double>.Build.DenseOfArray(new double[] { 0.25, 0.75 });
 
       var equationSystem = new EquivalentEquationSystem(number);
       var simpleIteartionMethod = new SimpleIterationMethod(equationSystem);
@@ -178,12 +162,12 @@ namespace Newton
       try
       {
         var result = simpleIteartionMethod.SolveEquationSystem(testValues);
-        DisplayResults(result);
+        DisplayUtils.DisplayResults(result);
       }
       catch (Exception exc)
       {
         simpleIteartionMethod.DisplayResults();
-        DisplayException(exc);
+        DisplayUtils.DisplayException(exc);
       }
     }
 
