@@ -5,7 +5,8 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Newton.NumericMethods.SimpleIteration
 {
-
+	// TODO провести рефакторинг - вынести новый родительский класс с общим функционалом
+	// создать абстрактный родительский класс
 	public class SimpleIterationMethod
 	{
 		protected readonly EquivalentEquationSystem _equationSystem;

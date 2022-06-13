@@ -16,7 +16,6 @@ namespace Newton.NumericMethods.SimpleIteration
 
 		public override Vector<double> SolveEquationSystem(Vector<double> values, int maxIteration = 100, bool verbose = false)
 		{
-			this._maxDegreeOfParallel = 2;
 			return base.SolveEquationSystem(values, maxIteration, verbose);
 		}
 
