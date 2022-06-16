@@ -7,26 +7,22 @@ namespace Newton.NumericMethods.NewtonMethod
 {
 	// TODO провести рефакториг с выделением отдельной иерархии классов (выделить отдельный родительский класс)
 	// возможжно нажжо перераспределить обяханности между классами EquationSystem и ...Method
-	public class ModifiedNewtonMethod
+	public class NewtonMethod
 	{
 		protected readonly EquationSystem _equationSystem;
 		protected readonly double _errorRate;
+		protected readonly double _step;
 		protected double? _currentNorma { get; set; }
-		// TODO найти нормальное имя для свойства
-		/// <summary>
-		/// Матрица арифметических дополнений для матрицы Якоби
-		/// </summary>
-		protected Matrix<double>? _jacobian { get; set; }
-		protected double? _jacobianDeterminat { get; set; }
 		public Vector<double>? Solution { get; protected set; }
 		public string? Error { get; protected set; }
 		public CompletedStatus Status { get; protected set; }
 		public int Iteration { get; protected set; }
 
-		public ModifiedNewtonMethod([NotNull] EquationSystem system, double errorRate = .00001f)
+		public NewtonMethod([NotNull] EquationSystem system, double errorRate = .00000001d, double stepValue = .0001d)
 		{
 			this._equationSystem = system;
 			this._errorRate = errorRate;
+			this._step = stepValue;
 			this.Status = CompletedStatus.NotStarted;
 		}
 
@@ -61,18 +57,36 @@ namespace Newton.NumericMethods.NewtonMethod
 			return this.Solution!;
 		}
 
-		protected virtual void ComputeJacobian(Vector<double> values)
+		// Порефачить метод. Много чего мне здесь не нравится
+		protected virtual Matrix<double> ComputeJacobian(Vector<double> values, Vector<double> computedValues)
 		{
-			throw new NotImplementedException("");
+			if (this._equationSystem.Size != values.Count)
+			{
+				throw new ArgumentException("Passed values should have the same length as number of equations");
+			}
+
+			// Задаем нулевую матрицу нужного размера
+			var jacobian = Matrix<double>.Build.Dense(values.Count, values.Count, 0);
+
+			// TODO провести рефакторинг метода. Мне не нравится
+			// Получаем исходную матрицу Якоби для нулевого случая
+			for (var index = 0; index < values.Count; index++)
+			{
+				values[index] += this._step;
+				var newColumn = (this._equationSystem.Compute(values) - computedValues).Divide(this._step);
+				jacobian.SetColumn(index, newColumn);
+				values[index] -= this._step;
+			}
+
+			return jacobian;
 		}
 
 		protected virtual void SetInitialStatus(Vector<double> values)
 		{
 			this.Solution = values;
-			this._currentNorma = this.Solution.GetNorma();
+			this._currentNorma = this.Solution.GetNormaForNewton();
 			this.Status = CompletedStatus.InProcess;
 			this.Error = null;
-			ComputeJacobian(this.Solution);
 		}
 
 		protected virtual void CompleteAsSuccess()
@@ -94,12 +108,17 @@ namespace Newton.NumericMethods.NewtonMethod
 				throw new NullReferenceException("Solution cannot contains null");
 			}
 
-			if (this._jacobian is null || !this._jacobianDeterminat.HasValue)
-			{
-				throw new NullReferenceException("Jacobian matrix can't be null.");
-			}
+			var cachedComputation = this._equationSystem.Compute(this.Solution);
 
-			throw new NotImplementedException();
+			var newSolution = this.Solution - (this.ComputeJacobian(this.Solution, cachedComputation).Inverse() * cachedComputation);
+			var newNormaValue = newSolution.GetNormaForNewton();
+			var isCompleted = Math.Abs(newSolution.Norm(2) - this.Solution.Norm(2)) <= this._errorRate;
+
+			this.Solution = newSolution;
+			this._currentNorma = newNormaValue;
+			this.Iteration = iteration;
+
+			return isCompleted;
 		}
 
 		public void DisplayResults()

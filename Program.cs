@@ -1,5 +1,5 @@
 ﻿using MathNet.Numerics.LinearAlgebra;
-using Newton.NumericMethods.SimpleIteration;
+using Newton.NumericMethods.NewtonMethod;
 using Newton.Utils;
 using Newtow.Equations;
 
@@ -20,11 +20,13 @@ namespace Newton
 		*/
 		public static void Main(string[] args)
 		{
-			var number = 2;
-			var testValues = Vector<double>.Build.DenseOfArray(new double[] { 0.25, 0.75 });
+			var number = 10;
+			// var testValues = Vector<double>.Build.DenseOfArray(new double[] { 0.25, 0.75 });
+			var testValues = Vector<double>.Build.Dense(number, 0);
 
-			var equationSystem = new EquivalentEquationSystem(number);
-			var simpleIteartionMethod = new SimpleIterationMethod(equationSystem);
+			var equationSystem = new EquationSystem(number);
+			var newtonMethod = new NewtonMethod(equationSystem);
+			/* var simpleIteartionMethod = new SimpleIterationMethod(equationSystem);
 			var parallelSimpleIterationMethod = new MultiThreadSimpleIterationMethod(equationSystem);
 
 			try
@@ -46,6 +48,17 @@ namespace Newton
 			catch (Exception exc)
 			{
 				simpleIteartionMethod.DisplayResults();
+				DisplayUtils.DisplayException(exc);
+			} */
+
+			try
+			{
+				var result = newtonMethod.SolveEquationSystem(testValues, verbose: true);
+				DisplayUtils.DisplayResults(result);
+			}
+			catch (Exception exc)
+			{
+				newtonMethod.DisplayResults();
 				DisplayUtils.DisplayException(exc);
 			}
 		}
