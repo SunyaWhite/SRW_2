@@ -22,10 +22,10 @@ namespace Newton
 		{
 			var number = 10;
 			// var testValues = Vector<double>.Build.DenseOfArray(new double[] { 0.25, 0.75 });
-			var testValues = Vector<double>.Build.Dense(number, 0);
 
 			var equationSystem = new EquationSystem(number);
 			var newtonMethod = new NewtonMethod(equationSystem);
+			var modifiedNewtonMethod = new ModifiedNewtonMethod(equationSystem);
 			/* var simpleIteartionMethod = new SimpleIterationMethod(equationSystem);
 			var parallelSimpleIterationMethod = new MultiThreadSimpleIterationMethod(equationSystem);
 
@@ -53,12 +53,27 @@ namespace Newton
 
 			try
 			{
+				Console.WriteLine("Basic Newton numeric method");
+				var testValues = Vector<double>.Build.Dense(number, 0);
 				var result = newtonMethod.SolveEquationSystem(testValues, verbose: true);
 				DisplayUtils.DisplayResults(result);
 			}
 			catch (Exception exc)
 			{
 				newtonMethod.DisplayResults();
+				DisplayUtils.DisplayException(exc);
+			}
+
+			try
+			{
+				Console.WriteLine("Modified Newton numeric method");
+				var testValues = Vector<double>.Build.Dense(number, 0.5);
+				var result = modifiedNewtonMethod.SolveEquationSystem(testValues, 200, true);
+				DisplayUtils.DisplayResults(result);
+			}
+			catch (Exception exc)
+			{
+				modifiedNewtonMethod.DisplayResults();
 				DisplayUtils.DisplayException(exc);
 			}
 		}

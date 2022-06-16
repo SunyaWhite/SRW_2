@@ -18,7 +18,7 @@ namespace Newton.NumericMethods.NewtonMethod
 		public CompletedStatus Status { get; protected set; }
 		public int Iteration { get; protected set; }
 
-		public NewtonMethod([NotNull] EquationSystem system, double errorRate = .00000001d, double stepValue = .0001d)
+		public NewtonMethod([NotNull] EquationSystem system, double errorRate = 1E-08, double stepValue = 1E-04)
 		{
 			this._equationSystem = system;
 			this._errorRate = errorRate;
