@@ -38,7 +38,32 @@ namespace Newton.NumericMethods.NewtonMethod
 			return isCompleted;
 		}
 
-		// Порефачить метод. Много чего мне здесь не нравится
+		protected virtual Matrix<double> ComputeJacobian()
+		{
+			if (this.Solution == null)
+			{
+				throw new NullReferenceException("Solution cannot contains null");
+			}
+
+			if (this._equationSystem.Size != this.Solution.Count)
+			{
+				throw new ArgumentException("Passed values should have the same length as number of equations");
+			}
+
+			var computedFunctionValues = this._equationSystem.Compute(this.Solution);
+			var jacobian = Matrix<double>.Build.Dense(this.Solution.Count, this.Solution.Count, 0);
+
+			for (var index = 0; index < this.Solution.Count; index++)
+			{
+				this.Solution[index] += this._step;
+				var newColumn = (this._equationSystem.Compute(this.Solution) - computedFunctionValues).Divide(this._step);
+				jacobian.SetColumn(index, newColumn);
+				this.Solution[index] -= this._step;
+			}
+
+			return jacobian;
+		}
+
 		protected virtual Matrix<double> ComputeJacobian(Vector<double> computedFunctionValues)
 		{
 			if (this.Solution == null)
@@ -51,11 +76,8 @@ namespace Newton.NumericMethods.NewtonMethod
 				throw new ArgumentException("Passed values should have the same length as number of equations");
 			}
 
-			// Задаем нулевую матрицу нужного размера
 			var jacobian = Matrix<double>.Build.Dense(this.Solution.Count, this.Solution.Count, 0);
 
-			// TODO провести рефакторинг метода. Мне не нравится
-			// Получаем исходную матрицу Якоби для нулевого случая
 			for (var index = 0; index < this.Solution.Count; index++)
 			{
 				this.Solution[index] += this._step;

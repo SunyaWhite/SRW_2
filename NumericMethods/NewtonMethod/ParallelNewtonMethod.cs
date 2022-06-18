@@ -31,6 +31,50 @@ namespace Newton.NumericMethods.NewtonMethod
 			return base.SolveEquationSystem(values, maxIteration, verbose);
 		}
 
+		/// <summary>
+		/// Parallel impplementation of jacobian matrix computation without precalculated function results.
+		/// </summary>
+		/// <returns> Jacobian matrix </returns>
+		/// <exception cref="NullReferenceException"></exception>
+		/// <exception cref="ArgumentException"></exception>
+		protected override Matrix<double> ComputeJacobian()
+		{
+			if (this.Solution == null)
+			{
+				throw new NullReferenceException("Solution cannot contains null");
+			}
+
+			if (this._equationSystem.Size != this.Solution.Count)
+			{
+				throw new ArgumentException("Passed values should have the same length as number of equations");
+			}
+
+			if (!this.DegreeOfParallelism.HasValue)
+			{
+				throw new NullReferenceException("Degree of parallelism should be set first before launching parallel method");
+			}
+
+			var computedFunctionValues = this._equationSystem.ComputeParallel(this.Solution, this.DegreeOfParallelism.Value);
+			var jacobian = Matrix<double>.Build.Dense(this.Solution.Count, this.Solution.Count, 0);
+
+			for (var index = 0; index < this.Solution.Count; index++)
+			{
+				this.Solution[index] += this._step;
+				var newColumn = (this._equationSystem.ComputeParallel(this.Solution, this.DegreeOfParallelism.Value) - computedFunctionValues).Divide(this._step);
+				jacobian.SetColumn(index, newColumn);
+				this.Solution[index] -= this._step;
+			}
+
+			return jacobian;
+		}
+
+		/// <summary>
+		/// Parallel impplementation of jacobian matrix computation.
+		/// </summary>
+		/// <param name="computedFunctionValues">precomputed function values for current solution</param>
+		/// <returns> Jacobian matrix </returns>
+		/// <exception cref="NullReferenceException"></exception>
+		/// <exception cref="ArgumentException"></exception>
 		protected override Matrix<double> ComputeJacobian(Vector<double> computedFunctionValues)
 		{
 			if (this.Solution == null)
@@ -48,11 +92,8 @@ namespace Newton.NumericMethods.NewtonMethod
 				throw new NullReferenceException("Degree of parallelism should be set first before launching parallel method");
 			}
 
-			// Задаем нулевую матрицу нужного размера
 			var jacobian = Matrix<double>.Build.Dense(this.Solution.Count, this.Solution.Count, 0);
 
-			// TODO провести рефакторинг метода. Мне не нравится
-			// Получаем исходную матрицу Якоби для нулевого случая
 			for (var index = 0; index < this.Solution.Count; index++)
 			{
 				this.Solution[index] += this._step;
@@ -62,6 +103,35 @@ namespace Newton.NumericMethods.NewtonMethod
 			}
 
 			return jacobian;
+		}
+
+		/// <summary>
+		/// Compute current iteration deviation for x = J(x(k))^(-1) * f(x(k))
+		/// </summary>
+		/// <returns> Vector of deviation values </returns>
+		/// <exception cref="NullReferenceException"></exception>
+		protected Vector<double> ComputeSolutionDeviation()
+		{
+			if (this.Solution == null)
+			{
+				throw new NullReferenceException("Solution cannot contains null");
+			}
+
+			if (!this.DegreeOfParallelism.HasValue)
+			{
+				throw new NullReferenceException("Degree of parallelism should be set first before launching parallel method");
+			}
+
+			var currentIteartionValues = this._equationSystem.ComputeParallel(this.Solution, this.DegreeOfParallelism.Value);
+
+			var inversedJacobianMatrix = this.ComputeJacobian(currentIteartionValues).Inverse();
+			var result = inversedJacobianMatrix.EnumerateRows()
+				.AsParallel()
+				.AsOrdered()
+				.WithDegreeOfParallelism(this.DegreeOfParallelism.Value)
+				.Select((vector) => vector * currentIteartionValues).ToArray();
+
+			return Vector<double>.Build.Dense(result);
 		}
 
 		protected override bool ComputeIteration(int iteration)
@@ -76,9 +146,8 @@ namespace Newton.NumericMethods.NewtonMethod
 				throw new NullReferenceException("Degree of parallelism should be set first before launching parallel method");
 			}
 
-			var currentIteartionValues = this._equationSystem.ComputeParallel(this.Solution, this.DegreeOfParallelism.Value);
-
-			var newSolution = this.Solution - (this.ComputeJacobian(currentIteartionValues).Inverse() * currentIteartionValues);
+			var solutionDeviation = ComputeSolutionDeviation();
+			var newSolution = this.Solution - solutionDeviation;
 			var isCompleted = Math.Abs(newSolution.Norm(2) - this.Solution.Norm(2)) <= this._errorRate;
 
 			this.Solution = newSolution;

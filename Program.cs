@@ -41,9 +41,8 @@ namespace Newton
 			}
 		}
 
-		public static void ComputeNewtonMethods()
+		public static void ComputeNewtonMethods(int numberForNewton = 100)
 		{
-			var numberForNewton = 10;
 			var equationSystem = new EquationSystem(numberForNewton);
 			var newtonMethod = new NewtonMethod(equationSystem);
 			var modifiedNewtonMethod = new ModifiedNewtonMethod(equationSystem);
@@ -52,7 +51,7 @@ namespace Newton
 			{
 				Console.WriteLine("Basic Newton numeric method");
 				var testValues = Vector<double>.Build.Dense(numberForNewton, 0);
-				var result = newtonMethod.SolveEquationSystem(testValues, verbose: true);
+				var result = newtonMethod.SolveEquationSystem(testValues, verbose: false);
 				DisplayUtils.DisplayResults(result);
 			}
 			catch (Exception exc)
@@ -75,6 +74,25 @@ namespace Newton
 			}
 		}
 
+		public static void ComputeParallelNewtonMethods(int numberForNewton = 100, int degreeOfParallelism = 2)
+		{
+			var equationSystem = new EquationSystem(numberForNewton);
+			var paralleNewtonMethod = new ParallelNewtonMethod(equationSystem, degreeOfParallelism: degreeOfParallelism);
+
+			try
+			{
+				Console.WriteLine("Basic Parallel Newton numeric method");
+				var testValues = Vector<double>.Build.Dense(numberForNewton, 0);
+				var result = paralleNewtonMethod.SolveEquationSystem(testValues, verbose: false);
+				DisplayUtils.DisplayResults(result);
+			}
+			catch (Exception exc)
+			{
+				paralleNewtonMethod.DisplayResults();
+				DisplayUtils.DisplayException(exc);
+			}
+		}
+
 		/*
 		  В качестве системы возьмём "Численные методы. Практикум. Python"
 		  Пока реализуем 
@@ -90,6 +108,7 @@ namespace Newton
 		{
 			// ComputeSimpleItartion();
 			ComputeNewtonMethods();
+			ComputeParallelNewtonMethods();
 		}
 
 	}
