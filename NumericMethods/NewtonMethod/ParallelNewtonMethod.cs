@@ -10,7 +10,7 @@ namespace Newton.NumericMethods.NewtonMethod
 		public int? DegreeOfParallelism
 		{
 			get => _degreeOfParallelism;
-			private set
+			protected set
 			{
 				if (value == null)
 				{
@@ -39,15 +39,6 @@ namespace Newton.NumericMethods.NewtonMethod
 		/// <exception cref="ArgumentException"></exception>
 		protected override Matrix<double> ComputeJacobian()
 		{
-			if (this.Solution == null)
-			{
-				throw new NullReferenceException("Solution cannot contains null");
-			}
-
-			if (this._equationSystem.Size != this.Solution.Count)
-			{
-				throw new ArgumentException("Passed values should have the same length as number of equations");
-			}
 
 			if (!this.DegreeOfParallelism.HasValue)
 			{
@@ -55,17 +46,8 @@ namespace Newton.NumericMethods.NewtonMethod
 			}
 
 			var computedFunctionValues = this._equationSystem.ComputeParallel(this.Solution, this.DegreeOfParallelism.Value);
-			var jacobian = Matrix<double>.Build.Dense(this.Solution.Count, this.Solution.Count, 0);
 
-			for (var index = 0; index < this.Solution.Count; index++)
-			{
-				this.Solution[index] += this._step;
-				var newColumn = (this._equationSystem.ComputeParallel(this.Solution, this.DegreeOfParallelism.Value) - computedFunctionValues).Divide(this._step);
-				jacobian.SetColumn(index, newColumn);
-				this.Solution[index] -= this._step;
-			}
-
-			return jacobian;
+			return this.ComputeJacobian(computedFunctionValues);
 		}
 
 		/// <summary>
@@ -110,7 +92,7 @@ namespace Newton.NumericMethods.NewtonMethod
 		/// </summary>
 		/// <returns> Vector of deviation values </returns>
 		/// <exception cref="NullReferenceException"></exception>
-		protected Vector<double> ComputeSolutionDeviation()
+		protected override Vector<double> ComputeDeviation()
 		{
 			if (this.Solution == null)
 			{
@@ -136,24 +118,12 @@ namespace Newton.NumericMethods.NewtonMethod
 
 		protected override bool ComputeIteration(int iteration)
 		{
-			if (this.Solution == null)
-			{
-				throw new NullReferenceException("Solution cannot contains null");
-			}
-
 			if (!this.DegreeOfParallelism.HasValue)
 			{
 				throw new NullReferenceException("Degree of parallelism should be set first before launching parallel method");
 			}
 
-			var solutionDeviation = ComputeSolutionDeviation();
-			var newSolution = this.Solution - solutionDeviation;
-			var isCompleted = Math.Abs(newSolution.Norm(2) - this.Solution.Norm(2)) <= this._errorRate;
-
-			this.Solution = newSolution;
-			this.Iteration = iteration;
-
-			return isCompleted;
+			return base.ComputeIteration(iteration);
 		}
 	}
 }

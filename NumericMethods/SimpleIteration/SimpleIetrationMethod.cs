@@ -19,14 +19,24 @@ namespace Newton.NumericMethods.SimpleIteration
 			this.Error = null;
 		}
 
-		protected override bool ComputeIteration(int iteration)
+		protected virtual Vector<double> ComputeNewIterationSolution()
 		{
 			if (this.Solution == null)
 			{
 				throw new NullReferenceException("Solution cannot contains null");
 			}
 
-			var newSolution = this._equationSystem.Compute(this.Solution);
+			if (this._equationSystem == null)
+			{
+				throw new NullReferenceException("Equation system object should be set first before launching parallel method");
+			}
+
+			return this._equationSystem.Compute(this.Solution);
+		}
+
+		protected override bool ComputeIteration(int iteration)
+		{
+			var newSolution = this.ComputeNewIterationSolution();
 			var newNormaValue = newSolution.GetNorma();
 			var isCompleted = Math.Abs(newNormaValue - this._currentNorma!.Value) < this._errorRate;
 

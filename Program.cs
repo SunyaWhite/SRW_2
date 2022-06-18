@@ -41,7 +41,7 @@ namespace Newton
 			}
 		}
 
-		public static void ComputeNewtonMethods(int numberForNewton = 100)
+		public static void ComputeNewtonMethods(int numberForNewton = 10)
 		{
 			var equationSystem = new EquationSystem(numberForNewton);
 			var newtonMethod = new NewtonMethod(equationSystem);
@@ -51,7 +51,7 @@ namespace Newton
 			{
 				Console.WriteLine("Basic Newton numeric method");
 				var testValues = Vector<double>.Build.Dense(numberForNewton, 0);
-				var result = newtonMethod.SolveEquationSystem(testValues, verbose: false);
+				var result = newtonMethod.SolveEquationSystem(testValues, verbose: true);
 				DisplayUtils.DisplayResults(result);
 			}
 			catch (Exception exc)
@@ -74,16 +74,17 @@ namespace Newton
 			}
 		}
 
-		public static void ComputeParallelNewtonMethods(int numberForNewton = 100, int degreeOfParallelism = 2)
+		public static void ComputeParallelNewtonMethods(int numberForNewton = 10, int degreeOfParallelism = 2)
 		{
 			var equationSystem = new EquationSystem(numberForNewton);
 			var paralleNewtonMethod = new ParallelNewtonMethod(equationSystem, degreeOfParallelism: degreeOfParallelism);
+			var parallelModifiedNewtonMethod = new ParallelModifiedNewtonMethod(equationSystem, degreeOfParallelism: degreeOfParallelism);
 
 			try
 			{
 				Console.WriteLine("Basic Parallel Newton numeric method");
 				var testValues = Vector<double>.Build.Dense(numberForNewton, 0);
-				var result = paralleNewtonMethod.SolveEquationSystem(testValues, verbose: false);
+				var result = paralleNewtonMethod.SolveEquationSystem(testValues, verbose: true);
 				DisplayUtils.DisplayResults(result);
 			}
 			catch (Exception exc)
@@ -91,24 +92,94 @@ namespace Newton
 				paralleNewtonMethod.DisplayResults();
 				DisplayUtils.DisplayException(exc);
 			}
+
+			try
+			{
+				Console.WriteLine("Modified Parallel Newton numeric method");
+				var testValues = Vector<double>.Build.Dense(numberForNewton, 0.5);
+				var result = parallelModifiedNewtonMethod.SolveEquationSystem(testValues, 200, true);
+				DisplayUtils.DisplayResults(result);
+			}
+			catch (Exception exc)
+			{
+				parallelModifiedNewtonMethod.DisplayResults();
+				DisplayUtils.DisplayException(exc);
+			}
 		}
 
-		/*
-		  В качестве системы возьмём "Численные методы. Практикум. Python"
-		  Пока реализуем 
-			- модифицированный метод Ньютона (т.е. считаем Якобиан один раз) 
-			  пробуем распараллелить - создать матрицу алгебраических дополнений для Якобиана
-			  Далее на каждой итерации нужно будет создавать новую матрицу у которой находим детерминант
-			  (идея взята из файла  numeric-methods-part2.pdf)
-			- метод простой итерации - пробуем распараллеить (тут несложно)
-			  единственное, надо привести исходное выражение (систему) к эквивалентному виду
-			- заюзать BenchmarkDotNet
-		*/
+		public static void ComputeBasicNewtonMethods(int numberForNewton = 10, int degreeOfParallelism = 2)
+		{
+			var equationSystem = new EquationSystem(numberForNewton);
+			var newtonMethod = new NewtonMethod(equationSystem);
+			var parallelNewtonMethod = new ParallelNewtonMethod(equationSystem, degreeOfParallelism: degreeOfParallelism);
+
+			try
+			{
+				Console.WriteLine("Basic Newton numeric method");
+				var testValues = Vector<double>.Build.Dense(numberForNewton, 0);
+				var result = newtonMethod.SolveEquationSystem(testValues, verbose: true);
+				DisplayUtils.DisplayResults(result);
+			}
+			catch (Exception exc)
+			{
+				newtonMethod.DisplayResults();
+				DisplayUtils.DisplayException(exc);
+			}
+
+			try
+			{
+				Console.WriteLine("Basic Parallel Newton numeric method");
+				var testValues = Vector<double>.Build.Dense(numberForNewton, 0);
+				var result = parallelNewtonMethod.SolveEquationSystem(testValues, verbose: true);
+				DisplayUtils.DisplayResults(result);
+			}
+			catch (Exception exc)
+			{
+				parallelNewtonMethod.DisplayResults();
+				DisplayUtils.DisplayException(exc);
+			}
+		}
+
+		public static void ComputeModifiedNewtonMethods(int numberForNewton = 10, int degreeOfParallelism = 2)
+		{
+			var equationSystem = new EquationSystem(numberForNewton);
+			var modifiedNewtonMethod = new ModifiedNewtonMethod(equationSystem);
+			var parallelModifiedNewtonMethod = new ParallelModifiedNewtonMethod(equationSystem, degreeOfParallelism: degreeOfParallelism);
+
+			try
+			{
+				Console.WriteLine("Modified Newton numeric method");
+				var testValues = Vector<double>.Build.Dense(numberForNewton, 0.5);
+				var result = modifiedNewtonMethod.SolveEquationSystem(testValues, 200);
+				DisplayUtils.DisplayResults(result);
+			}
+			catch (Exception exc)
+			{
+				modifiedNewtonMethod.DisplayResults();
+				DisplayUtils.DisplayException(exc);
+			}
+
+			try
+			{
+				Console.WriteLine("Modified Parallel Newton numeric method");
+				var testValues = Vector<double>.Build.Dense(numberForNewton, 0.5);
+				var result = parallelModifiedNewtonMethod.SolveEquationSystem(testValues, 200);
+				DisplayUtils.DisplayResults(result);
+			}
+			catch (Exception exc)
+			{
+				parallelModifiedNewtonMethod.DisplayResults();
+				DisplayUtils.DisplayException(exc);
+			}
+		}
+
 		public static void Main(string[] args)
 		{
 			// ComputeSimpleItartion();
-			ComputeNewtonMethods();
-			ComputeParallelNewtonMethods();
+			// ComputeNewtonMethods();
+			// ComputeParallelNewtonMethods();
+			// ComputeModifiedNewtonMethods();
+			ComputeBasicNewtonMethods();
 		}
 
 	}
