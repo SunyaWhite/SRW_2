@@ -1,5 +1,4 @@
 ﻿using MathNet.Numerics.LinearAlgebra;
-using Newton.Utils;
 using Newtow.Equations;
 using System.Diagnostics.CodeAnalysis;
 
@@ -7,11 +6,9 @@ namespace Newton.NumericMethods.NewtonMethod
 {
 	public class ModifiedNewtonMethod : NewtonMethod
 	{
-		private Matrix<double> _inversedJacobian { get; set; }
+		private Matrix<double>? _inversedJacobian { get; set; }
 
-		public ModifiedNewtonMethod([NotNull] EquationSystem system, double errorRate = 1E-08, double stepValue = 0.0001) : base(system, errorRate, stepValue)
-		{
-		}
+		public ModifiedNewtonMethod([NotNull] EquationSystem system, double errorRate = 1E-08, double stepValue = 0.0001) : base(system, errorRate, stepValue) { }
 
 		protected override void SetInitialStatus(Vector<double> values)
 		{
@@ -23,15 +20,18 @@ namespace Newton.NumericMethods.NewtonMethod
 		{
 			if (this.Solution == null)
 			{
-				throw new NullReferenceException("Solution cannot contains null");
+				throw new NullReferenceException("Solution cannot be null while computing next iteration values");
+			}
+
+			if (this._inversedJacobian == null)
+			{
+				throw new NullReferenceException("Inversed jacobian matrix cannot be null while computing next iteration values");
 			}
 
 			var newSolution = this.Solution - (this._inversedJacobian * this._equationSystem.Compute(this.Solution));
-			var newNormaValue = newSolution.GetNormaForNewton();
 			var isCompleted = Math.Abs(newSolution.Norm(2) - this.Solution.Norm(2)) <= this._errorRate;
 
 			this.Solution = newSolution;
-			this._currentNorma = newNormaValue;
 			this.Iteration = iteration;
 
 			return isCompleted;
