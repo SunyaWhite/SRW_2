@@ -8,16 +8,16 @@ namespace Newton.NumericMethods.NewtonMethod
 	{
 		private Matrix<double>? _inversedJacobianMatrix { get; set; }
 
-		public ParallelModifiedNewtonMethod([NotNull] EquationSystem system, double errorRate = 1E-08, double stepValue = 0.0001, int degreeOfParallelism = 2) : base(system, errorRate, stepValue, degreeOfParallelism) { }
+		public ParallelModifiedNewtonMethod(double errorRate = 1E-08, double stepValue = 0.0001, int degreeOfParallelism = 2) : base(errorRate, stepValue, degreeOfParallelism) { }
 
-		protected override void SetInitialStatus(Vector<double> values)
+		protected override void SetInitialStatus([NotNull] EquationSystem equationSystem, Vector<double> values)
 		{
-			base.SetInitialStatus(values);
+			base.SetInitialStatus(equationSystem, values);
 			this._inversedJacobianMatrix = this.ComputeJacobian().Inverse();
 		}
 
 		/// <summary>
-		/// Compute current iteration deviation for x = J(x(k))^(-1) * f(x(k))
+		/// Compute current iteration deviation for x = J(x(k))^(-1) * f(x(k)) in parallel
 		/// </summary>
 		/// <returns> Vector of deviation values </returns>
 		/// <exception cref="NullReferenceException"></exception>
@@ -38,7 +38,7 @@ namespace Newton.NumericMethods.NewtonMethod
 				throw new NullReferenceException("Degree of parallelism should be set first before launching parallel method");
 			}
 
-			var currentIteartionValues = this._equationSystem.ComputeParallel(this.Solution, this.DegreeOfParallelism.Value);
+			var currentIteartionValues = this.EquationSystem.ComputeParallel(this.Solution, this.DegreeOfParallelism.Value);
 
 			var result = this._inversedJacobianMatrix.EnumerateRows()
 				.AsParallel()

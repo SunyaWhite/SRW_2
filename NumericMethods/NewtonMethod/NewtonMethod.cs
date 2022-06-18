@@ -8,52 +8,36 @@ namespace Newton.NumericMethods.NewtonMethod
 	{
 		protected readonly double _step;
 
-		public NewtonMethod([NotNull] EquationSystem system, double errorRate = 1E-08, double stepValue = 1E-04) : base(system, errorRate)
+		public NewtonMethod(double errorRate = 1E-08, double stepValue = 1E-04) : base(errorRate)
 		{
 			this._step = stepValue;
 		}
 
-		protected override void SetInitialStatus(Vector<double> values)
+		protected override void SetInitialStatus([NotNull] EquationSystem equationSystem, Vector<double> values)
 		{
 			this.Solution = values;
+			this.EquationSystem = equationSystem;
 			this.Status = CompletedStatus.InProcess;
 			this.Error = null;
+			this.CurrentNorm = this.Solution.Norm(2);
 		}
 
-		protected virtual Vector<double> ComputeDeviation()
-		{
-			if (this.Solution == null)
-			{
-				throw new NullReferenceException("Solution cannot contains null");
-			}
-
-			var currentIteartionValues = this._equationSystem.Compute(this.Solution);
-
-			return this.ComputeJacobian(currentIteartionValues).Inverse() * currentIteartionValues;
-		}
-
-		protected override bool ComputeIteration(int iteration)
-		{
-			if (this.Solution == null)
-			{
-				throw new NullReferenceException("Solution cannot contains null");
-			}
-
-			var iterationDeviation = ComputeDeviation();
-			var newSolution = this.Solution - iterationDeviation;
-			var isCompleted = Math.Abs(newSolution.Norm(2) - this.Solution.Norm(2)) <= this._errorRate;
-
-			this.Solution = newSolution;
-			this.Iteration = iteration;
-
-			return isCompleted;
-		}
-
+		/// <summary>
+		/// Jacobian matrix computation without precalculated function results.
+		/// </summary>
+		/// <returns></returns>
 		protected virtual Matrix<double> ComputeJacobian()
 		{
-			return this.ComputeJacobian(this._equationSystem.Compute(this.Solution));
+			return this.ComputeJacobian(this.EquationSystem.Compute(this.Solution));
 		}
 
+		/// <summary>
+		/// Jacobian matrix computation
+		/// </summary>
+		/// <param name="computedFunctionValues"></param>
+		/// <returns></returns>
+		/// <exception cref="NullReferenceException"></exception>
+		/// <exception cref="ArgumentException"></exception>
 		protected virtual Matrix<double> ComputeJacobian(Vector<double> computedFunctionValues)
 		{
 			if (this.Solution == null)
@@ -61,7 +45,7 @@ namespace Newton.NumericMethods.NewtonMethod
 				throw new NullReferenceException("Solution cannot contains null");
 			}
 
-			if (this._equationSystem.Size != this.Solution.Count)
+			if (this.EquationSystem.Size != this.Solution.Count)
 			{
 				throw new ArgumentException("Passed values should have the same length as number of equations");
 			}
@@ -71,7 +55,7 @@ namespace Newton.NumericMethods.NewtonMethod
 			for (var index = 0; index < this.Solution.Count; index++)
 			{
 				this.Solution[index] += this._step;
-				var newColumn = (this._equationSystem.Compute(this.Solution) - computedFunctionValues).Divide(this._step);
+				var newColumn = (this.EquationSystem.Compute(this.Solution) - computedFunctionValues).Divide(this._step);
 				jacobian.SetColumn(index, newColumn);
 				this.Solution[index] -= this._step;
 			}
@@ -79,5 +63,46 @@ namespace Newton.NumericMethods.NewtonMethod
 			return jacobian;
 		}
 
+		protected override bool ComputeIteration(int iteration)
+		{
+			if (this.Solution == null)
+			{
+				throw new NullReferenceException("Solution cannot contains null");
+			}
+
+			if (this.CurrentNorm == null)
+			{
+				this.CurrentNorm = this.Solution.Norm(2);
+			}
+
+			var iterationDeviation = this.ComputeDeviation();
+			var newSolution = this.Solution - iterationDeviation;
+
+			var newNorm = newSolution.Norm(2);
+			var isCompleted = Math.Abs(newNorm - this.CurrentNorm.Value) <= this._errorRate;
+
+			this.CurrentNorm = newNorm;
+			this.Solution = newSolution;
+			this.Iteration = iteration;
+
+			return isCompleted;
+		}
+
+		/// <summary>
+		/// Compute current iteration deviation for x = J(x(k))^(-1) * f(x(k))
+		/// </summary>
+		/// <returns> Vector of deviation values </returns>
+		/// <exception cref="NullReferenceException"></exception>
+		protected virtual Vector<double> ComputeDeviation()
+		{
+			if (this.Solution == null)
+			{
+				throw new NullReferenceException("Solution cannot contains null");
+			}
+
+			var currentIteartionValues = this.EquationSystem.Compute(this.Solution);
+
+			return this.ComputeJacobian(currentIteartionValues).Inverse() * currentIteartionValues;
+		}
 	}
 }

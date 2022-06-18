@@ -20,15 +20,15 @@ namespace Newton.NumericMethods.NewtonMethod
 			}
 		}
 
-		public ParallelNewtonMethod([NotNull] EquationSystem system, double errorRate = 1E-08, double stepValue = 0.0001, int degreeOfParallelism = 2) : base(system, errorRate, stepValue)
+		public ParallelNewtonMethod(double errorRate = 1E-08, double stepValue = 0.0001, int degreeOfParallelism = 2) : base(errorRate, stepValue)
 		{
 			this.DegreeOfParallelism = degreeOfParallelism;
 		}
 
-		public Vector<double> SolveEquationSystem(Vector<double> values, int maxIteration = 100, bool verbose = false, int? degreeOfParallelism = null)
+		public Vector<double> SolveEquationSystem([NotNull] EquationSystem equationSystem, Vector<double> values, int maxIteration = 100, bool verbose = false, int? degreeOfParallelism = null)
 		{
 			this.DegreeOfParallelism = degreeOfParallelism;
-			return base.SolveEquationSystem(values, maxIteration, verbose);
+			return base.SolveEquationSystem(equationSystem, values, maxIteration, verbose);
 		}
 
 		/// <summary>
@@ -45,7 +45,7 @@ namespace Newton.NumericMethods.NewtonMethod
 				throw new NullReferenceException("Degree of parallelism should be set first before launching parallel method");
 			}
 
-			var computedFunctionValues = this._equationSystem.ComputeParallel(this.Solution, this.DegreeOfParallelism.Value);
+			var computedFunctionValues = this.EquationSystem.ComputeParallel(this.Solution, this.DegreeOfParallelism.Value);
 
 			return this.ComputeJacobian(computedFunctionValues);
 		}
@@ -64,7 +64,7 @@ namespace Newton.NumericMethods.NewtonMethod
 				throw new NullReferenceException("Solution cannot contains null");
 			}
 
-			if (this._equationSystem.Size != this.Solution.Count)
+			if (this.EquationSystem.Size != this.Solution.Count)
 			{
 				throw new ArgumentException("Passed values should have the same length as number of equations");
 			}
@@ -79,7 +79,7 @@ namespace Newton.NumericMethods.NewtonMethod
 			for (var index = 0; index < this.Solution.Count; index++)
 			{
 				this.Solution[index] += this._step;
-				var newColumn = (this._equationSystem.ComputeParallel(this.Solution, this.DegreeOfParallelism.Value) - computedFunctionValues).Divide(this._step);
+				var newColumn = (this.EquationSystem.ComputeParallel(this.Solution, this.DegreeOfParallelism.Value) - computedFunctionValues).Divide(this._step);
 				jacobian.SetColumn(index, newColumn);
 				this.Solution[index] -= this._step;
 			}
@@ -88,7 +88,7 @@ namespace Newton.NumericMethods.NewtonMethod
 		}
 
 		/// <summary>
-		/// Compute current iteration deviation for x = J(x(k))^(-1) * f(x(k))
+		/// Compute current iteration deviation for x = J(x(k))^(-1) * f(x(k)) in parallel
 		/// </summary>
 		/// <returns> Vector of deviation values </returns>
 		/// <exception cref="NullReferenceException"></exception>
@@ -104,7 +104,7 @@ namespace Newton.NumericMethods.NewtonMethod
 				throw new NullReferenceException("Degree of parallelism should be set first before launching parallel method");
 			}
 
-			var currentIteartionValues = this._equationSystem.ComputeParallel(this.Solution, this.DegreeOfParallelism.Value);
+			var currentIteartionValues = this.EquationSystem.ComputeParallel(this.Solution, this.DegreeOfParallelism.Value);
 
 			var inversedJacobianMatrix = this.ComputeJacobian(currentIteartionValues).Inverse();
 			var result = inversedJacobianMatrix.EnumerateRows()

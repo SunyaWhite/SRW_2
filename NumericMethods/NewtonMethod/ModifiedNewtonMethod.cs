@@ -8,14 +8,19 @@ namespace Newton.NumericMethods.NewtonMethod
 	{
 		private Matrix<double>? _inversedJacobianMatrix { get; set; }
 
-		public ModifiedNewtonMethod([NotNull] EquationSystem system, double errorRate = 1E-08, double stepValue = 0.0001) : base(system, errorRate, stepValue) { }
+		public ModifiedNewtonMethod(double errorRate = 1E-08, double stepValue = 0.0001) : base(errorRate, stepValue) { }
 
-		protected override void SetInitialStatus(Vector<double> values)
+		protected override void SetInitialStatus([NotNull] EquationSystem equationSystem, Vector<double> values)
 		{
-			base.SetInitialStatus(values);
-			this._inversedJacobianMatrix = this.ComputeJacobian(this._equationSystem.Compute(values)).Inverse();
+			base.SetInitialStatus(equationSystem, values);
+			this._inversedJacobianMatrix = this.ComputeJacobian(this.EquationSystem.Compute(values)).Inverse();
 		}
 
+		/// <summary>
+		/// Compute current iteration deviation for x = J(x(k))^(-1) * f(x(k)) with precalculated Jacobian matrix
+		/// </summary>
+		/// <returns> Vector of deviation values </returns>
+		/// <exception cref="NullReferenceException"></exception>
 		protected override Vector<double> ComputeDeviation()
 		{
 			if (this.Solution == null)
@@ -28,7 +33,7 @@ namespace Newton.NumericMethods.NewtonMethod
 				throw new NullReferenceException("Inversed jacobian matrix cannot be null while computing next iteration values");
 			}
 
-			return this._inversedJacobianMatrix * this._equationSystem.Compute(this.Solution);
+			return this._inversedJacobianMatrix * this.EquationSystem.Compute(this.Solution);
 		}
 
 		protected override bool ComputeIteration(int iteration)
