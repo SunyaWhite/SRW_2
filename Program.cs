@@ -1,4 +1,6 @@
-﻿using MathNet.Numerics.LinearAlgebra;
+﻿using BenchmarkDotNet.Running;
+using MathNet.Numerics.LinearAlgebra;
+using Newton.Benchmarks;
 using Newton.NumericMethods.NewtonMethod;
 using Newton.NumericMethods.SimpleIteration;
 using Newton.Utils;
@@ -14,7 +16,7 @@ namespace Newton
 
 			var equivalentEquationSystem = new EquivalentEquationSystem(numberForSimpleIteration);
 			var simpleIteartionMethod = new SimpleIterationMethod();
-			var parallelSimpleIterationMethod = new MultiThreadSimpleIterationMethod();
+			var parallelSimpleIterationMethod = new ParallelSimpleIterationMethod();
 
 			try
 			{
@@ -51,8 +53,8 @@ namespace Newton
 			{
 				Console.WriteLine("Basic Newton numeric method");
 				var testValues = Vector<double>.Build.Dense(numberForNewton, 0);
-				var result = newtonMethod.SolveEquationSystem(equationSystem, testValues, verbose: true);
-				DisplayUtils.DisplayResults(result);
+				var result = newtonMethod.SolveEquationSystem(equationSystem, testValues, verbose: false);
+				newtonMethod.DisplayResults();
 			}
 			catch (Exception exc)
 			{
@@ -64,8 +66,8 @@ namespace Newton
 			{
 				Console.WriteLine("Modified Newton numeric method");
 				var testValues = Vector<double>.Build.Dense(numberForNewton, 0.5);
-				var result = modifiedNewtonMethod.SolveEquationSystem(equationSystem, testValues, 200, true);
-				DisplayUtils.DisplayResults(result);
+				var result = modifiedNewtonMethod.SolveEquationSystem(equationSystem, testValues, 2000, false);
+				modifiedNewtonMethod.DisplayResults();
 			}
 			catch (Exception exc)
 			{
@@ -175,11 +177,10 @@ namespace Newton
 
 		public static void Main(string[] args)
 		{
-			// ComputeSimpleItartion();
-			// ComputeNewtonMethods();
-			// ComputeParallelNewtonMethods();
-			// ComputeModifiedNewtonMethods();
-			ComputeBasicNewtonMethods();
+			BenchmarkRunner.Run<BasicNewtonBenchmarks>();
+			BenchmarkRunner.Run<NewtonBenchmarkEqualConditions>();
+			BenchmarkRunner.Run<SimpleIterationBenchmark>();
+			BenchmarkRunner.Run<ParallelNewtonBenchmarkEqualConditions>();
 		}
 
 	}

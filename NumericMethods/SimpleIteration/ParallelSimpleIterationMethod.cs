@@ -3,7 +3,7 @@ using Newtow.Equations;
 
 namespace Newton.NumericMethods.SimpleIteration
 {
-	public class MultiThreadSimpleIterationMethod : SimpleIterationMethod
+	public class ParallelSimpleIterationMethod : SimpleIterationMethod
 	{
 		private int _degreeOfParallelism;
 		public int? DegreeOfParallelism
@@ -19,7 +19,7 @@ namespace Newton.NumericMethods.SimpleIteration
 			}
 		}
 
-		public MultiThreadSimpleIterationMethod(double errorRate = .00001f, int? degreeOfParallelism = 2) : base(errorRate)
+		public ParallelSimpleIterationMethod(double errorRate = .00001f, int? degreeOfParallelism = 2) : base(errorRate)
 		{
 			this.DegreeOfParallelism = degreeOfParallelism;
 		}
