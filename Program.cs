@@ -19,7 +19,7 @@ namespace Newton
 			try
 			{
 				var testValuesForSimpleIteration = Vector<double>.Build.DenseOfArray(new double[] { 0.25, 0.75 });
-				var result = simpleIteartionMethod.SolveEquationSystem(testValuesForSimpleIteration);
+				var result = simpleIteartionMethod.SolveEquationSystem(testValuesForSimpleIteration, verbose: true);
 				DisplayUtils.DisplayResults(result);
 			}
 			catch (Exception exc)
@@ -31,7 +31,7 @@ namespace Newton
 			try
 			{
 				var testValuesForSimpleIteration = Vector<double>.Build.DenseOfArray(new double[] { 0.25, 0.75 });
-				var result = parallelSimpleIterationMethod.SolveEquationSystem(testValuesForSimpleIteration);
+				var result = parallelSimpleIterationMethod.SolveEquationSystem(testValuesForSimpleIteration, verbose: true);
 				DisplayUtils.DisplayResults(result);
 			}
 			catch (Exception exc)
@@ -88,8 +88,8 @@ namespace Newton
 		*/
 		public static void Main(string[] args)
 		{
-			ComputeSimpleItartion();
-			// ComputeNewtonMethods();
+			// ComputeSimpleItartion();
+			ComputeNewtonMethods();
 		}
 
 	}

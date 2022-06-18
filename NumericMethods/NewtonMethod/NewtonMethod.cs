@@ -27,9 +27,9 @@ namespace Newton.NumericMethods.NewtonMethod
 				throw new NullReferenceException("Solution cannot contains null");
 			}
 
-			var cachedComputation = this._equationSystem.Compute(this.Solution);
+			var currentIteartionValues = this._equationSystem.Compute(this.Solution);
 
-			var newSolution = this.Solution - (this.ComputeJacobian(this.Solution, cachedComputation).Inverse() * cachedComputation);
+			var newSolution = this.Solution - (this.ComputeJacobian(this.Solution, currentIteartionValues).Inverse() * currentIteartionValues);
 			var isCompleted = Math.Abs(newSolution.Norm(2) - this.Solution.Norm(2)) <= this._errorRate;
 
 			this.Solution = newSolution;
