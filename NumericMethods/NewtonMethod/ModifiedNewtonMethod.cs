@@ -13,7 +13,7 @@ namespace Newton.NumericMethods.NewtonMethod
 		protected override void SetInitialStatus(Vector<double> values)
 		{
 			base.SetInitialStatus(values);
-			this._inversedJacobian = this.ComputeJacobian(values, this._equationSystem.Compute(values)).Inverse();
+			this._inversedJacobian = this.ComputeJacobian(this._equationSystem.Compute(values)).Inverse();
 		}
 
 		protected override bool ComputeIteration(int iteration)

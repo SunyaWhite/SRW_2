@@ -29,7 +29,7 @@ namespace Newton.NumericMethods.NewtonMethod
 
 			var currentIteartionValues = this._equationSystem.Compute(this.Solution);
 
-			var newSolution = this.Solution - (this.ComputeJacobian(this.Solution, currentIteartionValues).Inverse() * currentIteartionValues);
+			var newSolution = this.Solution - (this.ComputeJacobian(currentIteartionValues).Inverse() * currentIteartionValues);
 			var isCompleted = Math.Abs(newSolution.Norm(2) - this.Solution.Norm(2)) <= this._errorRate;
 
 			this.Solution = newSolution;
@@ -39,24 +39,29 @@ namespace Newton.NumericMethods.NewtonMethod
 		}
 
 		// Порефачить метод. Много чего мне здесь не нравится
-		protected virtual Matrix<double> ComputeJacobian(Vector<double> values, Vector<double> computedValues)
+		protected virtual Matrix<double> ComputeJacobian(Vector<double> computedFunctionValues)
 		{
-			if (this._equationSystem.Size != values.Count)
+			if (this.Solution == null)
+			{
+				throw new NullReferenceException("Solution cannot contains null");
+			}
+
+			if (this._equationSystem.Size != this.Solution.Count)
 			{
 				throw new ArgumentException("Passed values should have the same length as number of equations");
 			}
 
 			// Задаем нулевую матрицу нужного размера
-			var jacobian = Matrix<double>.Build.Dense(values.Count, values.Count, 0);
+			var jacobian = Matrix<double>.Build.Dense(this.Solution.Count, this.Solution.Count, 0);
 
 			// TODO провести рефакторинг метода. Мне не нравится
 			// Получаем исходную матрицу Якоби для нулевого случая
-			for (var index = 0; index < values.Count; index++)
+			for (var index = 0; index < this.Solution.Count; index++)
 			{
-				values[index] += this._step;
-				var newColumn = (this._equationSystem.Compute(values) - computedValues).Divide(this._step);
+				this.Solution[index] += this._step;
+				var newColumn = (this._equationSystem.Compute(this.Solution) - computedFunctionValues).Divide(this._step);
 				jacobian.SetColumn(index, newColumn);
-				values[index] -= this._step;
+				this.Solution[index] -= this._step;
 			}
 
 			return jacobian;
